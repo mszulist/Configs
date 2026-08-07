@@ -19,16 +19,28 @@
         "apiKey": "ollama"
       },
       "models": {
-        "deepseek-r1:14b": { "name": "DeepSeek R1 14b", "tool_call": true, "reasoning": true, "limit": { "context": 16384, "output": 4096 } },
-        "deepseek-r1:7b": { "name": "DeepSeek R1 7b", "tool_call": true, "reasoning": true, "limit": { "context": 16384, "output": 4096 } },
-        "deepseek-r1:8b": { "name": "DeepSeek R1 8b", "tool_call": true, "reasoning": true, "limit": { "context": 16384, "output": 4096 } },
-        "qwen3-vl:8b": { "name": "Qwen3 VL 8b", "tool_call": true, "limit": { "context": 16384, "output": 4096 } },
-        "qwen2.5-coder:7b": { "name": "Qwen2.5 Coder 7b", "tool_call": true, "limit": { "context": 16384, "output": 8192 } },
-        "qwen3.5:9b": { "name": "Qwen3.5 9b", "tool_call": true, "limit": { "context": 16384, "output": 8192 } },
-        "gemma4:12b": { "name": "Gemma4 12b", "tool_call": false, "limit": { "context": 16384, "output": 4096 } },
-        "qwen2.5-coder:14b": { "name": "Qwen2.5 Coder 14b", "tool_call": true, "limit": { "context": 16384, "output": 8192 } },
-        "mistral:latest": { "name": "Mistral 7b", "tool_call": true, "limit": { "context": 16384, "output": 4096 } },
-        "qwen2.5:7b": { "name": "Qwen2.5 7b", "tool_call": true, "limit": { "context": 32768, "output": 8192 } },
+        // === Primary coding / agent default ===
+        "qwen2.5-coder:14b": { "name": "Qwen2.5 Coder 14b", "tool_call": true, "limit": { "context": 16384, "output": 8192 } },   // best code quality, default
+        "qwen3:14b": { "name": "Qwen3 14b", "tool_call": true, "reasoning": true, "limit": { "context": 16384, "output": 4096 } },      // reasoning + native tools, 2nd pick
+
+        // === Multimodal (vision/audio + text) ===
+        "qwen3-vl:8b": { "name": "Qwen3 VL 8b", "tool_call": true, "limit": { "context": 16384, "output": 4096 } },        // screenshots, UI bugs
+        "gemma4:12b": { "name": "Gemma4 12b", "tool_call": true, "reasoning": true, "limit": { "context": 16384, "output": 4096 } },   // vision + audio, heavier brain
+
+        // === Fast / lightweight ===
+        "qwen3.5:4b": { "name": "Qwen3.5 4b", "tool_call": true, "limit": { "context": 16384, "output": 4096 } },          // titles, quick chat, small_model
+        "qwen2.5-coder:7b": { "name": "Qwen2.5 Coder 7b", "tool_call": true, "limit": { "context": 16384, "output": 8192 } },    // fast small edits
+        "qwen2.5:7b": { "name": "Qwen2.5 7b", "tool_call": true, "limit": { "context": 32768, "output": 8192 } },          // 32k ctx, long docs
+
+        // === Reasoning / analysis ===
+        "deepseek-r1:14b": { "name": "DeepSeek R1 14b", "tool_call": true, "reasoning": true, "limit": { "context": 16384, "output": 4096 } }, // planning, deep debugging
+        "deepseek-r1:8b": { "name": "DeepSeek R1 8b", "tool_call": true, "reasoning": true, "limit": { "context": 16384, "output": 4096 } },  // lighter reasoning
+        "deepseek-r1:7b": { "name": "DeepSeek R1 7b", "tool_call": true, "reasoning": true, "limit": { "context": 16384, "output": 4096 } },  // fastest reasoning
+
+        // === General all-rounder ===
+        "qwen3.5:9b": { "name": "Qwen3.5 9b", "tool_call": true, "limit": { "context": 16384, "output": 8192 } },           // mixed chat+code+tools
+        "mistral:latest": { "name": "Mistral 7b", "tool_call": true, "limit": { "context": 16384, "output": 4096 } },           // generic filler
+
         // Disabled 2026-08-08: opencode always sends tool definitions on every request (upstream
         // bug https://github.com/anomalyco/opencode/issues/35432, unfixed through v1.18.15), so the
         // `tool_call` flag is ignored and Ollama rejects these models with 400 "does not support
