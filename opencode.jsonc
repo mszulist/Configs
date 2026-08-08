@@ -10,6 +10,8 @@
     "max_bytes": 30000
   },
   "share": "disabled",
+  "model": "ollama/deepseek-r1:8b",
+  "small_model": "ollama/qwen3.5:4b",
   "provider": {
     "ollama": {
       "npm": "@ai-sdk/openai-compatible",
@@ -26,43 +28,46 @@
         // Inline scores are % pass@1 unless marked as an index (AA = Artificial Analysis). "N/A" =
         // too new to have published scores. "REMOVE CANDIDATE" markers note models kept for
         // convenience but outclassed by others in the same category; drop them to slim the list.
+        // Context sizing (12GB VRAM, Q4): 4b/7b/8b/9b run at 32-64k without OOM; 12b at 32k;
+        // 14b stays at 16k (~10GB with ctx). Bigger ctx costs KV-cache VRAM — go up a step only
+        // if you actually hit the limit, and keep the small_model low so compaction is cheap.
 
         // === Primary: reasoning-heavy code work (RE, deep debugging) ===
         // Order basis: reasoning-first (your RE use case). r1:8b leads — it's the R1-0528 Qwen3
         // refresh and outranks the r1 14b/7b below on the SHARED LiveCodeBench/GPQA/AIME set
         // (60.5 vs 53.1/37.6) at half the VRAM. coder:14b and qwen3:14b use different benchmarks
         // (HumanEval / AA index), so their position is task-fit judgment, not head-to-head score.
-        "deepseek-r1:8b": { "name": "DeepSeek R1 8b", "tool_call": true, "reasoning": true, "limit": { "context": 16384, "output": 4096 } },  // LiveCodeBench 60.5, GPQA 61.1, AIME 86.0 — top reasoning/code pick
-        "qwen2.5-coder:14b": { "name": "Qwen2.5 Coder 14b", "tool_call": true, "limit": { "context": 16384, "output": 8192 } },   // HumanEval 89.6, MBPP 83.5 — best code quality, agent default
+        "deepseek-r1:8b": { "name": "DeepSeek R1 8b", "tool_call": true, "reasoning": true, "limit": { "context": 32768, "output": 4096 } },  // LiveCodeBench 60.5, GPQA 61.1, AIME 86.0 — top reasoning/code pick
+        "qwen2.5-coder:14b": { "name": "Qwen2.5 Coder 14b", "tool_call": true, "limit": { "context": 16384, "output": 8192 } },   // HumanEval 89.6, MBPP 86.2 — best code quality, agent default
         "qwen3:14b": { "name": "Qwen3 14b", "tool_call": true, "reasoning": true, "limit": { "context": 16384, "output": 4096 } },      // AA Intelligence 10.4, AA Coding 13.8 — reasoning + native tools
         // REMOVE CANDIDATE: deepseek-r1:14b — outclassed by :8b on every reasoning/code benchmark, ~2x VRAM.
         "deepseek-r1:14b": { "name": "DeepSeek R1 14b", "tool_call": true, "reasoning": true, "limit": { "context": 16384, "output": 4096 } },  // LiveCodeBench 53.1, GPQA 59.1, AIME 69.7
         // REMOVE CANDIDATE: deepseek-r1:7b — worst of the three (LiveCodeBench 37.6); :8b is same speed class with higher quality.
-        "deepseek-r1:7b": { "name": "DeepSeek R1 7b", "tool_call": true, "reasoning": true, "limit": { "context": 16384, "output": 4096 } },  // LiveCodeBench 37.6, GPQA 49.1, AIME 55.5 — fastest reasoning
+        "deepseek-r1:7b": { "name": "DeepSeek R1 7b", "tool_call": true, "reasoning": true, "limit": { "context": 32768, "output": 4096 } },  // LiveCodeBench 37.6, GPQA 49.1, AIME 55.5 — fastest reasoning
 
         // === Multimodal (vision/audio + text) ===
-        "qwen3-vl:8b": { "name": "Qwen3 VL 8b", "tool_call": true, "limit": { "context": 16384, "output": 4096 } },        // MMMU 74.1, GPQA 69.9, MathVista 81.4 — best vision of the two
+        "qwen3-vl:8b": { "name": "Qwen3 VL 8b", "tool_call": true, "limit": { "context": 32768, "output": 4096 } },        // MMMU 74.1, GPQA 69.9, MathVista 81.4 — best vision of the two
         // REMOVE CANDIDATE: gemma4:12b — tool_call: false (unusable in opencode's tool-driven flows) and
         // outclassed by qwen3-vl:8b on reasoning-heavy vision; keep only if you need audio input.
-        "gemma4:12b": { "name": "Gemma4 12b", "tool_call": false, "limit": { "context": 16384, "output": 4096 } },   // Gemma3 12B ref: HumanEval 85.4, IFEval 88.9 — vision + audio, heavier brain
+        "gemma4:12b": { "name": "Gemma4 12b", "tool_call": false, "limit": { "context": 32768, "output": 4096 } },   // Gemma3 12B ref: HumanEval 85.4, IFEval 88.9 — vision + audio, heavier brain
 
         // === Fast / lightweight ===
-        "qwen2.5-coder:7b": { "name": "Qwen2.5 Coder 7b", "tool_call": true, "limit": { "context": 16384, "output": 8192 } },    // BigCodeBench 41.0, HumanEval 88.4 — fastest solid code
-        "qwen2.5:7b": { "name": "Qwen2.5 7b", "tool_call": true, "limit": { "context": 32768, "output": 8192 } },          // MMLU 78.0, HumanEval 84.8, GSM8K 91.6 — 32k ctx, long docs
-        "qwen3.5:4b": { "name": "Qwen3.5 4b", "tool_call": true, "limit": { "context": 16384, "output": 4096 } },          // N/A (no published scores yet) — smallest; titles, quick chat, small_model
+        "qwen2.5-coder:7b": { "name": "Qwen2.5 Coder 7b", "tool_call": true, "limit": { "context": 32768, "output": 8192 } },    // BigCodeBench 41.0, HumanEval 88.4 — fastest solid code
+        "qwen2.5:7b": { "name": "Qwen2.5 7b", "tool_call": true, "limit": { "context": 65536, "output": 8192 } },          // MMLU 78.0, HumanEval 84.8, GSM8K 91.6 — 64k ctx, long docs
+        "qwen3.5:4b": { "name": "Qwen3.5 4b", "tool_call": true, "limit": { "context": 65536, "output": 4096 } },          // N/A (no published scores yet) — smallest; titles, quick chat, small_model
 
         // === General all-rounder ===
         // REMOVE CANDIDATE: this whole category — you don't need it (no boilerplate work). Both overlap
         // qwen2.5-coder:14b / qwen3:14b and trail them on every coding/reasoning benchmark.
-        "qwen3.5:9b": { "name": "Qwen3.5 9b", "tool_call": true, "limit": { "context": 16384, "output": 8192 } },           // N/A (no published scores yet) — mixed chat+code+tools
-        "mistral:latest": { "name": "Mistral 7b", "tool_call": true, "limit": { "context": 16384, "output": 4096 } },           // MMLU 62.5, HumanEval 55.5 — generic filler
+        "qwen3.5:9b": { "name": "Qwen3.5 9b", "tool_call": true, "limit": { "context": 32768, "output": 8192 } },           // N/A (no published scores yet) — mixed chat+code+tools
+        "mistral:latest": { "name": "Mistral 7b", "tool_call": true, "limit": { "context": 32768, "output": 4096 } },           // MMLU 62.5, HumanEval 55.5 — generic filler
 
         // Disabled 2026-08-08: opencode always sends tool definitions on every request (upstream
-        // bug https://github.com/anomalyco/opencode/issues/35432, unfixed through v1.18.15), so the
+        // bug https://github.com/anomalyco/opencode/issues/35432, still open as of 2026-07-09), so the
         // `tool_call` flag is ignored and Ollama rejects these models with 400 "does not support
-        // tools". None can be used in opencode's tool-driven workflow until the upstream fix lands;
-        // the ones that could be useful (deepseek-coder-v2:16b, llama3) are outclassed by the kept
-        // models. Re-enable once the fix is released.
+        // tools". Workaround: run them via an agent with `tools: {"*": false}` so no tool
+        // definitions are sent. Even so, the ones that could be useful (deepseek-coder-v2:16b,
+        // llama3) are outclassed by the kept models. Re-enable once the fix is released.
         // "deepseek-coder-v2:16b": { "name": "DeepSeek Coder V2 16b", "tool_call": true, "limit": { "context": 8192, "output": 4096 } },
         // "deepseek-coder:1.3b": { "name": "DeepSeek Coder 1.3b", "tool_call": true, "limit": { "context": 16384, "output": 4096 } },
         // "gemma:2b": { "name": "Gemma 2b", "tool_call": false, "limit": { "context": 8192, "output": 4096 } },
