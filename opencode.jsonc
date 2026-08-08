@@ -19,38 +19,43 @@
         "apiKey": "ollama"
       },
       "models": {
-        // Ranking method (2026-08-08): order within each category by benchmark evidence from
-        // 2026-08 leaderboards (LiveCodeBench, GPQA, AIME, BigCodeBench, Aider Polyglot).
-        // "REMOVE CANDIDATE" markers note models kept for convenience but outclassed by others
-        // in the same category; drop them to slim the list.
+        // Ranking method (2026-08-08): benchmarks are category-specific and NOT comparable across
+        // categories or model families. Within a family, a shared benchmark decides order (e.g. the
+        // three r1 variants sort by LiveCodeBench/GPQA/AIME). Across families, order is by task fit
+        // for your RE workflow (reasoning > code-gen > balanced) + VRAM + tool reliability.
+        // Inline scores are % pass@1 unless marked as an index (AA = Artificial Analysis). "N/A" =
+        // too new to have published scores. "REMOVE CANDIDATE" markers note models kept for
+        // convenience but outclassed by others in the same category; drop them to slim the list.
 
         // === Primary: reasoning-heavy code work (RE, deep debugging) ===
-        // BEST: r1:8b is DeepSeek-R1-0528 (Qwen3-based refresh) — outranks the r1 14b/7b on LiveCodeBench
-        // (60.5 vs 53.1/37.6), GPQA, AIME, at half the VRAM (~5.2GB vs ~9GB).
-        "deepseek-r1:8b": { "name": "DeepSeek R1 8b", "tool_call": true, "reasoning": true, "limit": { "context": 16384, "output": 4096 } },  // top reasoning/code pick, planning, deep debugging
-        "qwen2.5-coder:14b": { "name": "Qwen2.5 Coder 14b", "tool_call": true, "limit": { "context": 16384, "output": 8192 } },   // best code quality, agent default
-        "qwen3:14b": { "name": "Qwen3 14b", "tool_call": true, "reasoning": true, "limit": { "context": 16384, "output": 4096 } },      // reasoning + native tools
+        // Order basis: reasoning-first (your RE use case). r1:8b leads — it's the R1-0528 Qwen3
+        // refresh and outranks the r1 14b/7b below on the SHARED LiveCodeBench/GPQA/AIME set
+        // (60.5 vs 53.1/37.6) at half the VRAM. coder:14b and qwen3:14b use different benchmarks
+        // (HumanEval / AA index), so their position is task-fit judgment, not head-to-head score.
+        "deepseek-r1:8b": { "name": "DeepSeek R1 8b", "tool_call": true, "reasoning": true, "limit": { "context": 16384, "output": 4096 } },  // LiveCodeBench 60.5, GPQA 61.1, AIME 86.0 — top reasoning/code pick
+        "qwen2.5-coder:14b": { "name": "Qwen2.5 Coder 14b", "tool_call": true, "limit": { "context": 16384, "output": 8192 } },   // HumanEval 89.6, MBPP 83.5 — best code quality, agent default
+        "qwen3:14b": { "name": "Qwen3 14b", "tool_call": true, "reasoning": true, "limit": { "context": 16384, "output": 4096 } },      // AA Intelligence 10.4, AA Coding 13.8 — reasoning + native tools
         // REMOVE CANDIDATE: deepseek-r1:14b — outclassed by :8b on every reasoning/code benchmark, ~2x VRAM.
-        "deepseek-r1:14b": { "name": "DeepSeek R1 14b", "tool_call": true, "reasoning": true, "limit": { "context": 16384, "output": 4096 } },
+        "deepseek-r1:14b": { "name": "DeepSeek R1 14b", "tool_call": true, "reasoning": true, "limit": { "context": 16384, "output": 4096 } },  // LiveCodeBench 53.1, GPQA 59.1, AIME 69.7
         // REMOVE CANDIDATE: deepseek-r1:7b — worst of the three (LiveCodeBench 37.6); :8b is same speed class with higher quality.
-        "deepseek-r1:7b": { "name": "DeepSeek R1 7b", "tool_call": true, "reasoning": true, "limit": { "context": 16384, "output": 4096 } },  // fastest reasoning
+        "deepseek-r1:7b": { "name": "DeepSeek R1 7b", "tool_call": true, "reasoning": true, "limit": { "context": 16384, "output": 4096 } },  // LiveCodeBench 37.6, GPQA 49.1, AIME 55.5 — fastest reasoning
 
         // === Multimodal (vision/audio + text) ===
-        "qwen3-vl:8b": { "name": "Qwen3 VL 8b", "tool_call": true, "limit": { "context": 16384, "output": 4096 } },        // screenshots, UI bugs; best vision of the two (wins 6/7 vision benchmarks vs Gemma 3 12B)
+        "qwen3-vl:8b": { "name": "Qwen3 VL 8b", "tool_call": true, "limit": { "context": 16384, "output": 4096 } },        // MMMU 74.1, GPQA 69.9, MathVista 81.4 — best vision of the two
         // REMOVE CANDIDATE: gemma4:12b — tool_call: false (unusable in opencode's tool-driven flows) and
         // outclassed by qwen3-vl:8b on reasoning-heavy vision; keep only if you need audio input.
-        "gemma4:12b": { "name": "Gemma4 12b", "tool_call": false, "limit": { "context": 16384, "output": 4096 } },   // vision + audio, heavier brain
+        "gemma4:12b": { "name": "Gemma4 12b", "tool_call": false, "limit": { "context": 16384, "output": 4096 } },   // Gemma3 12B ref: HumanEval 85.4, IFEval 88.9 — vision + audio, heavier brain
 
         // === Fast / lightweight ===
-        "qwen2.5-coder:7b": { "name": "Qwen2.5 Coder 7b", "tool_call": true, "limit": { "context": 16384, "output": 8192 } },    // fastest solid code; BigCodeBench 41.0, elite for its size
-        "qwen2.5:7b": { "name": "Qwen2.5 7b", "tool_call": true, "limit": { "context": 32768, "output": 8192 } },          // 32k ctx, long docs
-        "qwen3.5:4b": { "name": "Qwen3.5 4b", "tool_call": true, "limit": { "context": 16384, "output": 4096 } },          // smallest; titles, quick chat, small_model
+        "qwen2.5-coder:7b": { "name": "Qwen2.5 Coder 7b", "tool_call": true, "limit": { "context": 16384, "output": 8192 } },    // BigCodeBench 41.0, HumanEval 88.4 — fastest solid code
+        "qwen2.5:7b": { "name": "Qwen2.5 7b", "tool_call": true, "limit": { "context": 32768, "output": 8192 } },          // MMLU 78.0, HumanEval 84.8, GSM8K 91.6 — 32k ctx, long docs
+        "qwen3.5:4b": { "name": "Qwen3.5 4b", "tool_call": true, "limit": { "context": 16384, "output": 4096 } },          // N/A (no published scores yet) — smallest; titles, quick chat, small_model
 
         // === General all-rounder ===
         // REMOVE CANDIDATE: this whole category — you don't need it (no boilerplate work). Both overlap
         // qwen2.5-coder:14b / qwen3:14b and trail them on every coding/reasoning benchmark.
-        "qwen3.5:9b": { "name": "Qwen3.5 9b", "tool_call": true, "limit": { "context": 16384, "output": 8192 } },           // mixed chat+code+tools
-        "mistral:latest": { "name": "Mistral 7b", "tool_call": true, "limit": { "context": 16384, "output": 4096 } },           // generic filler
+        "qwen3.5:9b": { "name": "Qwen3.5 9b", "tool_call": true, "limit": { "context": 16384, "output": 8192 } },           // N/A (no published scores yet) — mixed chat+code+tools
+        "mistral:latest": { "name": "Mistral 7b", "tool_call": true, "limit": { "context": 16384, "output": 4096 } },           // MMLU 62.5, HumanEval 55.5 — generic filler
 
         // Disabled 2026-08-08: opencode always sends tool definitions on every request (upstream
         // bug https://github.com/anomalyco/opencode/issues/35432, unfixed through v1.18.15), so the
